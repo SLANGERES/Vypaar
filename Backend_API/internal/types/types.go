@@ -2,9 +2,9 @@ package types
 
 type Product struct {
 	Id       int     `json:"id"`
-	Name     string  `json:"product_name"`
-	Price    float64 `json:"product price"`
-	Quantity int     `json:"product_quantity"`
+	Name     string  `validate:"required"`
+	Price    float64 `validate:"required"`
+	Quantity int     `validate:"required"`
 }
 
 type ErrorResponse struct {

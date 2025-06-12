@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/slangeres/Vypaar/backend_API/internal/config"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
 )
@@ -15,7 +16,6 @@ type DbConnection struct {
 func ConfigSQL(cnf *config.Config) (*DbConnection, error) {
 	db, err := sql.Open("sqlite3", cnf.StoragePath)
 	if err != nil {
-
 		slog.Error("DB ERROR: Unable to connect to the storage path", "error", err)
 		return nil, err
 	}

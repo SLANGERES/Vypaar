@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-playground/validator"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
 	"github.com/slangeres/Vypaar/backend_API/internal/util"
@@ -24,6 +25,20 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 		}
 		if err != nil {
 			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("invalid request body: %w", err)))
+			return
+		}
+
+		//!NEED TO VALIDATE FIRST
+
+		err = validator.New().Struct(data)
+		if err != nil {
+			if validationErrors, ok := err.(validator.ValidationErrors); ok {
+				fmt.Println(validationErrors)
+				util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("validation error occus")))
+			} else {
+				// Optional: catch other validation-related errors
+				util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("validation error")))
+			}
 			return
 		}
 
