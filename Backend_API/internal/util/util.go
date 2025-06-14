@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"net/http"
 
@@ -23,4 +24,10 @@ func ErrorResponse(err error) types.ErrorResponse {
 	response.Error = err.Error()
 
 	return response
+}
+
+func ParseInt(id string) (int64, error) {
+	newId, err := strconv.ParseInt(id, 10, 64)
+
+	return newId, err
 }

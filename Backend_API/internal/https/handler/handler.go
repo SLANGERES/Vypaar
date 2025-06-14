@@ -56,19 +56,61 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 	}
 }
 
-func GetProduct() http.HandlerFunc {
+func GetProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.WriteResponse(w, http.StatusOK, "Getting the product")
+		products, err := storage.GetAllProduct()
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get the product")))
+			return
+		}
+
+		// Construct a generic map[string]interface{} response
+		util.WriteResponse(w, http.StatusOK, map[string]interface{}{
+			"success":  true,
+			"products": products,
+		})
 	}
 }
-func GetProductById() http.HandlerFunc {
+
+func GetProductById(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.WriteResponse(w, http.StatusOK, "Getting by id ")
+		var product types.Product
+		id := r.PathValue("id")
+		newId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to convert id")))
+			return
+		}
+
+		product, err = storage.GetUserById(newId)
+
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get the product")))
+			return
+		}
+
+		util.WriteResponse(w, http.StatusOK, product)
 	}
 }
-func DeleteProduct() http.HandlerFunc {
+func DeleteProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.WriteResponse(w, http.StatusOK, "Delete Product")
+		id := r.PathValue("id")
+
+		newId, err := util.ParseInt(id)
+		if err != nil {
+			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("invalid product ID")))
+			return
+		}
+
+		err = storage.DeleteUser(newId)
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to delete product")))
+			return
+		}
+
+		util.WriteResponse(w, http.StatusOK, map[string]interface{}{
+			"message": "Product deleted successfully",
+		})
 	}
 }
 

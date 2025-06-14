@@ -74,3 +74,35 @@ func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
 
 	return products, nil
 }
+func (sqlDb *DbConnection) GetUserById(id int64) (types.Product, error) {
+	stmt, err := sqlDb.db.Prepare("SELECT id, product_name, product_price, product_quantity FROM product WHERE id = ?")
+	if err != nil {
+		return types.Product{}, err
+	}
+	defer stmt.Close()
+
+	var product types.Product
+	err = stmt.QueryRow(id).Scan(&product.Id, &product.Name, &product.Price, &product.Quantity)
+	if err != nil {
+		return types.Product{}, err
+	}
+
+	return product, nil
+}
+
+func (sqlDb *DbConnection) DeleteUser(id int64) (error) {
+
+	// Then, delete the product
+	stmt, err := sqlDb.db.Prepare("DELETE FROM product WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

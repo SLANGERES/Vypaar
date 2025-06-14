@@ -38,13 +38,13 @@ func main() {
 
 	router.HandleFunc("POST /api/v1/product", handler.PostProduct(db))
 
-	router.HandleFunc("GET /api/v1/product", handler.GetProduct())
+	router.HandleFunc("GET /api/v1/product", handler.GetProduct(db))
 
-	router.HandleFunc("GET /api/v1/product/{id}", handler.GetProductById())
+	router.HandleFunc("GET /api/v1/product/{id}", handler.GetProductById(db))
 
 	router.HandleFunc("PATCH /api/v1/product/{id}", handler.UpdateProduct())
 
-	router.HandleFunc("DELETE /api/v1/product/{id}", handler.DeleteProduct())
+	router.HandleFunc("DELETE /api/v1/product/{id}", handler.DeleteProduct(db))
 
 	server := &http.Server{
 		Addr:    cnf.HttpServer.Addr,
