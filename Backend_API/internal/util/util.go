@@ -26,6 +26,15 @@ func ErrorResponse(err error) types.ErrorResponse {
 	return response
 }
 
+func ParameterMissing(w http.ResponseWriter, StatusCode int) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(StatusCode)
+	return json.NewEncoder(w).Encode(map[string]string{
+		"sucess":  "false",
+		"message": "Id is missing",
+	})
+}
+
 func ParseInt(id string) (int64, error) {
 	newId, err := strconv.ParseInt(id, 10, 64)
 

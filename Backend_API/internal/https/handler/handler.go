@@ -76,9 +76,12 @@ func GetProductById(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var product types.Product
 		id := r.PathValue("id")
+		if id == "" {
+			util.ParameterMissing(w, http.StatusInternalServerError)
+		}
 		newId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to convert id")))
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to parse id")))
 			return
 		}
 
@@ -95,10 +98,13 @@ func GetProductById(storage storage.Storage) http.HandlerFunc {
 func DeleteProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
+		if id == "" {
+			util.ParameterMissing(w, http.StatusInternalServerError)
+		}
 
 		newId, err := util.ParseInt(id)
 		if err != nil {
-			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("invalid product ID")))
+			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("unable to parse the id")))
 			return
 		}
 
@@ -114,8 +120,34 @@ func DeleteProduct(storage storage.Storage) http.HandlerFunc {
 	}
 }
 
-func UpdateProduct() http.HandlerFunc {
+func UpdateProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.WriteResponse(w, http.StatusOK, "Update product")
+		id := r.PathValue("id")
+		if id == "" {
+			util.ParameterMissing(w, http.StatusInternalServerError)
+		}
+
+		newId, err := util.ParseInt(id)
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to parse the id")))
+			return
+		}
+
+		var product types.Product
+
+		json.NewDecoder(r.Body).Decode(&product)
+
+		response, err := storage.UpdateProduct(newId, product.Name, float32(product.Price), int(product.Price))
+
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to update the product")))
+			return
+		}
+
+		util.WriteResponse(w, http.StatusOK, map[string]interface{}{
+			"sucess":   true,
+			"response": response,
+		})
+
 	}
 }

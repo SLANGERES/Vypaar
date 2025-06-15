@@ -90,7 +90,7 @@ func (sqlDb *DbConnection) GetUserById(id int64) (types.Product, error) {
 	return product, nil
 }
 
-func (sqlDb *DbConnection) DeleteUser(id int64) (error) {
+func (sqlDb *DbConnection) DeleteUser(id int64) error {
 
 	// Then, delete the product
 	stmt, err := sqlDb.db.Prepare("DELETE FROM product WHERE id = ?")
@@ -105,4 +105,26 @@ func (sqlDb *DbConnection) DeleteUser(id int64) (error) {
 	}
 
 	return nil
+}
+
+func (sqlDb *DbConnection) UpdateProduct(id int64, name string, price float32, quantity int) (int64, error) {
+	stmt, err := sqlDb.db.Prepare(`UPDATE product
+		SET product_name = ?, product_price = ?, product_quantity = ?
+		WHERE id = ?`)
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(name, price, quantity, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }

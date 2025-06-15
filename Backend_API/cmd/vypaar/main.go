@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/cors"
 	"github.com/slangeres/Vypaar/backend_API/internal/config"
 	"github.com/slangeres/Vypaar/backend_API/internal/https/handler"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage/sqllite"
@@ -42,13 +43,23 @@ func main() {
 
 	router.HandleFunc("GET /api/v1/product/{id}", handler.GetProductById(db))
 
-	router.HandleFunc("PATCH /api/v1/product/{id}", handler.UpdateProduct())
+	router.HandleFunc("PATCH /api/v1/product/{id}", handler.UpdateProduct(db))
 
 	router.HandleFunc("DELETE /api/v1/product/{id}", handler.DeleteProduct(db))
 
+	// ! Adding cors to the api
+	corsReq := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, //!for the testing purpose i put cors origin * ...... Later change
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE"},
+		AllowedHeaders:   []string{"Content-type", "Authorization"},
+		AllowCredentials: true,
+	})
+	//! Wrapping cors header in the handler ..............
+	requestHandler := corsReq.Handler(router)
+
 	server := &http.Server{
 		Addr:    cnf.HttpServer.Addr,
-		Handler: router,
+		Handler: requestHandler,
 	}
 	slog.Info("Server is up and running")
 
