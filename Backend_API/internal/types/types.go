@@ -11,3 +11,9 @@ type ErrorResponse struct {
 	Status string
 	Error  string
 }
+type User struct {
+	Id       int    `json:"id"`
+	Name     string `validate:"required"`
+	Email    string `validate:"required"`
+	Password string `validate:"required"`
+}
