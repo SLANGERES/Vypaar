@@ -10,7 +10,7 @@ type Storage interface {
 	UpdateProduct(id int64, name string, price float32, quantity int) (int64, error)
 }
 
-type UserStorage interface{
-	Login()
-	Signup()
+type UserStorage interface {
+	Login(email string, password string) (int64, error)
+	Signup(name string, email string, password string) (int64, error)
 }

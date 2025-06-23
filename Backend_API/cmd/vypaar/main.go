@@ -28,6 +28,12 @@ func main() {
 
 	}
 
+	userDb, err := sqllite.InitUserDb(cnf)
+
+	if err != nil {
+		slog.Warn("user db connection issue")
+	}
+
 	//^Making the router
 	router := http.NewServeMux()
 
@@ -36,6 +42,12 @@ func main() {
 	router.HandleFunc("GET /api/v1/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello from vypaar api"))
 	})
+
+	//! Authenticate handler
+
+	router.HandleFunc("POST /api/v1/signup", handler.SignupUser(userDb))
+
+	router.HandleFunc("POST /api/v1/login", handler.LoginUser(userDb))
 
 	router.HandleFunc("POST /api/v1/product", handler.PostProduct(db))
 

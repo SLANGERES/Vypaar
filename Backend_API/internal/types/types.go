@@ -16,4 +16,9 @@ type User struct {
 	Name     string `validate:"required"`
 	Email    string `validate:"required"`
 	Password string `validate:"required"`
+	CreateBy string `json:"created_at"`
+}
+type Login struct{
+	Email string `validate:"required"`
+	Password string `validate:"required"`
 }
