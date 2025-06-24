@@ -33,6 +33,7 @@ func InitUserDb(cnf *config.Config) (*UserDbConnection, error) {
 			name TEXT NOT NULL,
 			email TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL,
+			shopID TEXT NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
@@ -66,7 +67,7 @@ func (dbc *UserDbConnection) Login(email string, password string) (int64, error)
 
 	return int64(userdata.Id), nil
 }
-func (dbc *UserDbConnection) Signup(name string, email string, password string) (int64, error) {
+func (dbc *UserDbConnection) Signup(name string, email string, password string, shopID string) (int64, error) {
 	// Hash the password using bcrypt
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -75,14 +76,15 @@ func (dbc *UserDbConnection) Signup(name string, email string, password string) 
 	}
 
 	// Prepare SQL statement
-	stmt, err := dbc.db.Prepare(`INSERT INTO user(name, email, password) VALUES (?, ?, ?)`)
+
+	stmt, err := dbc.db.Prepare(`INSERT INTO user(name, email, password, shopID) VALUES (?, ?, ?, ?)`)
 	if err != nil {
 		return 0, fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Close()
 
 	// Execute the insert with hashed password
-	result, err := stmt.Exec(name, email, string(hashedPassword))
+	result, err := stmt.Exec(name, email, string(hashedPassword), shopID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute statement: %w", err)
 	}

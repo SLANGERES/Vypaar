@@ -2,6 +2,7 @@ package token
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -41,8 +42,9 @@ func (maker *JwtMaker) VerifyToken(tokenStr string) (string, error) {
 	}
 
 	if !token.Valid {
+		slog.Error("invalid Token")
 		return "", errors.New("invalid token")
 	}
 
-	return claims.Subject, nil // email or user id depending on what you set
+	return claims.Subject, nil
 }

@@ -12,5 +12,5 @@ type Storage interface {
 
 type UserStorage interface {
 	Login(email string, password string) (int64, error)
-	Signup(name string, email string, password string) (int64, error)
+	Signup(name string, email string, password string, shopID string) (int64, error)
 }

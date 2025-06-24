@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator"
+	"github.com/google/uuid"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage"
 	"github.com/slangeres/Vypaar/backend_API/internal/token"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
@@ -52,9 +53,9 @@ func LoginUser(storage storage.UserStorage, jwtMaker *token.JwtMaker) http.Handl
 			return
 		}
 		http.SetCookie(w, &http.Cookie{
-			Name:     "token",
-			Value:    tokenString,
-			MaxAge:   int((24 * time.Hour).Seconds()),
+			Name:   "token",
+			Value:  tokenString,
+			MaxAge: int((24 * time.Hour).Seconds()),
 		})
 
 		// Success response
@@ -87,7 +88,8 @@ func SignupUser(storage storage.UserStorage) http.HandlerFunc {
 			util.WriteResponse(w, http.StatusBadRequest, "Validation Error Occur")
 			return
 		}
-		id, err := storage.Signup(user.Name, user.Email, user.Password)
+		newShopID := uuid.NewString()
+		id, err := storage.Signup(user.Name, user.Email, user.Password, newShopID)
 
 		if err != nil {
 			util.ErrorResponse(fmt.Errorf("unable to sign up"))

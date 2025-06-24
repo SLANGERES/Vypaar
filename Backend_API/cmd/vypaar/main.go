@@ -79,7 +79,6 @@ func main() {
 		Handler: requestHandler,
 	}
 	slog.Info("Server is up and running")
-
 	//! gracefully shutdown
 
 	done := make(chan os.Signal, 1)
