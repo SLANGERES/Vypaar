@@ -12,7 +12,9 @@ import (
 	"github.com/rs/cors"
 	"github.com/slangeres/Vypaar/backend_API/internal/config"
 	"github.com/slangeres/Vypaar/backend_API/internal/https/handler"
+	"github.com/slangeres/Vypaar/backend_API/internal/https/middleware"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage/sqllite"
+	"github.com/slangeres/Vypaar/backend_API/internal/token"
 )
 
 func main() {
@@ -27,6 +29,9 @@ func main() {
 		slog.Warn("databse connection issue .....")
 
 	}
+
+	//JWT Maker
+	jwtMaker := token.NewJwtMaker(cnf.JwtSecrateKey)
 
 	userDb, err := sqllite.InitUserDb(cnf)
 
@@ -47,17 +52,17 @@ func main() {
 
 	router.HandleFunc("POST /api/v1/signup", handler.SignupUser(userDb))
 
-	router.HandleFunc("POST /api/v1/login", handler.LoginUser(userDb))
+	router.HandleFunc("POST /api/v1/login", handler.LoginUser(userDb, jwtMaker))
 
-	router.HandleFunc("POST /api/v1/product", handler.PostProduct(db))
+	router.Handle("POST /api/v1/products", middleware.AuthMiddleware(jwtMaker)(handler.PostProduct(db)))
 
-	router.HandleFunc("GET /api/v1/product", handler.GetProduct(db))
+	router.Handle("GET /api/v1/products", middleware.AuthMiddleware(jwtMaker)(handler.GetProduct(db)))
 
-	router.HandleFunc("GET /api/v1/product/{id}", handler.GetProductById(db))
+	router.Handle("GET /api/v1/products/{id}", middleware.AuthMiddleware(jwtMaker)(handler.GetProductById(db)))
 
-	router.HandleFunc("PATCH /api/v1/product/{id}", handler.UpdateProduct(db))
+	router.Handle("PATCH /api/v1/products/{id}", middleware.AuthMiddleware(jwtMaker)(handler.UpdateProduct(db)))
 
-	router.HandleFunc("DELETE /api/v1/product/{id}", handler.DeleteProduct(db))
+	router.Handle("DELETE /api/v1/products/{id}", middleware.AuthMiddleware(jwtMaker)(handler.DeleteProduct(db)))
 
 	// ! Adding cors to the api
 	corsReq := cors.New(cors.Options{

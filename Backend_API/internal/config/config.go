@@ -16,6 +16,7 @@ type Config struct {
 	Env             string     `yaml:"env" env:"ENV" env-required:"true"`
 	StoragePath     string     `yaml:"storage_path" env-required:"true"`
 	UserStoragePath string     `yaml:"user_storage_path" env-required:"true"`
+	JwtSecrateKey   string     `yaml:"jwt_secrate_key" env-required:"true"`
 	HttpServer      HttpServer `yaml:"http_server"`
 }
 

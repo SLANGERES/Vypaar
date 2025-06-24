@@ -3,6 +3,7 @@ package sqllite
 import (
 	"database/sql"
 	"fmt"
+
 	"log/slog"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
@@ -67,7 +68,7 @@ func (dbc *UserDbConnection) Login(email string, password string) (int64, error)
 }
 func (dbc *UserDbConnection) Signup(name string, email string, password string) (int64, error) {
 	// Hash the password using bcrypt
-	
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return 0, fmt.Errorf("failed to hash password: %w", err)

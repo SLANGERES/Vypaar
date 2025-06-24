@@ -5,48 +5,63 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
+
 	"net/http"
 
 	"github.com/go-playground/validator"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage"
+	"github.com/slangeres/Vypaar/backend_API/internal/token"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
 	"github.com/slangeres/Vypaar/backend_API/internal/util"
 )
 
-func LoginUser(storage storage.UserStorage) http.HandlerFunc {
-
+func LoginUser(storage storage.UserStorage, jwtMaker *token.JwtMaker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		var userCred types.Login
 
+		// Decode JSON body
 		err := json.NewDecoder(r.Body).Decode(&userCred)
-
 		if errors.Is(err, io.EOF) {
-			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("response body is missing")))
+			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("request body is empty")))
 			return
 		}
 		if err != nil {
-			util.WriteResponse(w, http.StatusBadRequest, fmt.Errorf("request error"))
+			util.WriteResponse(w, http.StatusBadRequest, fmt.Errorf("invalid request format"))
 			return
 		}
+
+		// Validate struct
 		err = validator.New().Struct(userCred)
-
 		if err != nil {
-			//!validation error
-			util.WriteResponse(w, http.StatusBadRequest, "Validation Error Occur")
+			util.WriteResponse(w, http.StatusBadRequest, "Validation Error")
 			return
 		}
+
+		// Authenticate user
 		id, err := storage.Login(userCred.Email, userCred.Password)
-
 		if err != nil {
-			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("404 user not found ")))
+			util.WriteResponse(w, http.StatusUnauthorized, util.ErrorResponse(fmt.Errorf("invalid credentials")))
 			return
 		}
 
+		// Generate JWT Token
+		tokenString, err := jwtMaker.GenerateToken(userCred.Email, time.Hour*24) // token valid for 24 hours
+		if err != nil {
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("failed to generate token")))
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     "token",
+			Value:    tokenString,
+			MaxAge:   int((24 * time.Hour).Seconds()),
+		})
+
+		// Success response
 		util.WriteResponse(w, http.StatusOK, map[string]any{
-			"sucess":  "true",
-			"message": "Login sucessful",
-			"Id":      id,
+			"success": true,
+			"message": "Login successful",
+			"id":      id,
 		})
 	}
 }

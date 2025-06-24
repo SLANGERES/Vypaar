@@ -6,6 +6,7 @@ import (
 
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
 )
 
@@ -39,4 +40,10 @@ func ParseInt(id string) (int64, error) {
 	newId, err := strconv.ParseInt(id, 10, 64)
 
 	return newId, err
+}
+
+func GenerateUID() string {
+	token := uuid.NewString()
+
+	return token
 }
