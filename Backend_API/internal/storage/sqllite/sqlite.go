@@ -23,6 +23,7 @@ func ConfigSQL(cnf *config.Config) (*DbConnection, error) {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS product (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			shopID string, 
 			product_name TEXT,
 			product_price REAL,
 			product_quantity INTEGER
@@ -37,17 +38,17 @@ func ConfigSQL(cnf *config.Config) (*DbConnection, error) {
 }
 
 // CreateProduct method
-func (sqlDb *DbConnection) CreateProduct(name string, price float32, quantity int) (int64, error) {
+func (sqlDb *DbConnection) CreateProduct(name string, price float32, quantity int, shopID string) (int64, error) {
 	stmt, err := sqlDb.db.Prepare(`
-		INSERT INTO product (product_name, product_price, product_quantity)
-		VALUES (?, ?, ?)
+		INSERT INTO product (shopID, product_name, product_price, product_quantity)
+		VALUES (?, ?, ?, ?)
 	`)
 	if err != nil {
 		return 0, err
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(name, price, quantity)
+	result, err := stmt.Exec(shopID, name, price, quantity)
 	if err != nil {
 		return 0, err
 	}
@@ -57,7 +58,7 @@ func (sqlDb *DbConnection) CreateProduct(name string, price float32, quantity in
 
 // GetAllProduct method
 func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
-	rows, err := sqlDb.db.Query("SELECT id, product_name, product_price, product_quantity FROM product")
+	rows, err := sqlDb.db.Query("SELECT id, shopID, product_name, product_price, product_quantity FROM product")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
 	var products []types.Product
 	for rows.Next() {
 		var p types.Product
-		if err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.Quantity); err != nil {
+		if err := rows.Scan(&p.Id, &p.ShopID, &p.Name, &p.Price, &p.Quantity); err != nil {
 			return nil, err
 		}
 		products = append(products, p)
@@ -75,14 +76,14 @@ func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
 	return products, nil
 }
 func (sqlDb *DbConnection) GetUserById(id int64) (types.Product, error) {
-	stmt, err := sqlDb.db.Prepare("SELECT id, product_name, product_price, product_quantity FROM product WHERE id = ?")
+	stmt, err := sqlDb.db.Prepare("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE id = ?")
 	if err != nil {
 		return types.Product{}, err
 	}
 	defer stmt.Close()
 
 	var product types.Product
-	err = stmt.QueryRow(id).Scan(&product.Id, &product.Name, &product.Price, &product.Quantity)
+	err = stmt.QueryRow(id).Scan(&product.Id, &product.ShopID, &product.Name, &product.Price, &product.Quantity)
 	if err != nil {
 		return types.Product{}, err
 	}
@@ -128,3 +129,5 @@ func (sqlDb *DbConnection) UpdateProduct(id int64, name string, price float32, q
 
 	return rowsAffected, nil
 }
+
+//! get product with shop id

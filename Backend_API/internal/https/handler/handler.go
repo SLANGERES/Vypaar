@@ -41,8 +41,8 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 			}
 			return
 		}
-
-		id, err := storage.CreateProduct(data.Name, float32(data.Price), data.Quantity)
+		shopID := "chinmay_7733844"
+		id, err := storage.CreateProduct(data.Name, float32(data.Price), data.Quantity, shopID)
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("failed to create product: %w", err)))
 			return
