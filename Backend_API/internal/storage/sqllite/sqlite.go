@@ -102,7 +102,7 @@ func (sqlDb *DbConnection) DeleteUser(id int64, shopID string) error {
 
 	_, err = stmt.Exec(id, shopID)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return nil
