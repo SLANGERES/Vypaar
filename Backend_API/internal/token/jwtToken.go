@@ -1,50 +1,49 @@
 package token
 
 import (
-	"errors"
-	"log/slog"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type JwtMaker struct {
-	secretKey string
+	SecretKey string
 }
 
 func NewJwtMaker(secretKey string) *JwtMaker {
-	return &JwtMaker{secretKey: secretKey}
+	return &JwtMaker{SecretKey: secretKey}
 }
 
-func (maker *JwtMaker) GenerateToken(email string, duration time.Duration) (string, error) {
-	claims := jwt.RegisteredClaims{
-		Subject:   email,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	}
+type VypaarClaim struct {
+	ShopID string `json:"shopID"`
+	jwt.RegisteredClaims
+}
+
+func (maker *JwtMaker) GenerateToken(email string, shopID string, duration time.Duration) (string, error) {
+	claims := VypaarClaim{
+		ShopID: shopID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   email,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		}}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(maker.secretKey))
+	return token.SignedString([]byte(maker.SecretKey))
 }
-func (maker *JwtMaker) VerifyToken(tokenStr string) (string, error) {
-	claims := &jwt.RegisteredClaims{}
-
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		// Ensure signing method is HMAC
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(maker.secretKey), nil
+func (maker *JwtMaker) VerifyToken(tokenString string) (*VypaarClaim, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &VypaarClaim{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(maker.SecretKey), nil
 	})
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if !token.Valid {
-		slog.Error("invalid Token")
-		return "", errors.New("invalid token")
+	claims, ok := token.Claims.(*VypaarClaim)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token")
 	}
 
-	return claims.Subject, nil
+	return claims, nil
 }

@@ -40,14 +40,14 @@ func LoginUser(storage storage.UserStorage, jwtMaker *token.JwtMaker) http.Handl
 		}
 
 		// Authenticate user
-		id, err := storage.Login(userCred.Email, userCred.Password)
+		shopID, err := storage.Login(userCred.Email, userCred.Password)
 		if err != nil {
 			util.WriteResponse(w, http.StatusUnauthorized, util.ErrorResponse(fmt.Errorf("invalid credentials")))
 			return
 		}
 
 		// Generate JWT Token
-		tokenString, err := jwtMaker.GenerateToken(userCred.Email, time.Hour*24) // token valid for 24 hours
+		tokenString, err := jwtMaker.GenerateToken(userCred.Email, shopID, time.Hour*24) // token valid for 24 hours
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("failed to generate token")))
 			return
@@ -62,7 +62,6 @@ func LoginUser(storage storage.UserStorage, jwtMaker *token.JwtMaker) http.Handl
 		util.WriteResponse(w, http.StatusOK, map[string]any{
 			"success": true,
 			"message": "Login successful",
-			"id":      id,
 		})
 	}
 }

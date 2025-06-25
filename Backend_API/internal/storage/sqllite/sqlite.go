@@ -57,8 +57,8 @@ func (sqlDb *DbConnection) CreateProduct(name string, price float32, quantity in
 }
 
 // GetAllProduct method
-func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
-	rows, err := sqlDb.db.Query("SELECT id, shopID, product_name, product_price, product_quantity FROM product")
+func (sqlDb *DbConnection) GetAllProduct(shopID string) ([]types.Product, error) {
+	rows, err := sqlDb.db.Query("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE shopID=?", shopID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,15 +75,15 @@ func (sqlDb *DbConnection) GetAllProduct() ([]types.Product, error) {
 
 	return products, nil
 }
-func (sqlDb *DbConnection) GetUserById(id int64) (types.Product, error) {
-	stmt, err := sqlDb.db.Prepare("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE id = ?")
+func (sqlDb *DbConnection) GetUserById(id int64, shopID string) (types.Product, error) {
+	stmt, err := sqlDb.db.Prepare("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE id = ? AND shopID = ?")
 	if err != nil {
 		return types.Product{}, err
 	}
 	defer stmt.Close()
 
 	var product types.Product
-	err = stmt.QueryRow(id).Scan(&product.Id, &product.ShopID, &product.Name, &product.Price, &product.Quantity)
+	err = stmt.QueryRow(id, shopID).Scan(&product.Id, &product.ShopID, &product.Name, &product.Price, &product.Quantity)
 	if err != nil {
 		return types.Product{}, err
 	}
@@ -91,33 +91,33 @@ func (sqlDb *DbConnection) GetUserById(id int64) (types.Product, error) {
 	return product, nil
 }
 
-func (sqlDb *DbConnection) DeleteUser(id int64) error {
+func (sqlDb *DbConnection) DeleteUser(id int64, shopID string) error {
 
 	// Then, delete the product
-	stmt, err := sqlDb.db.Prepare("DELETE FROM product WHERE id = ?")
+	stmt, err := sqlDb.db.Prepare("DELETE FROM product WHERE id = ? AND shopID = ?")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(id)
+	_, err = stmt.Exec(id, shopID)
 	if err != nil {
-		return err
+		return err 
 	}
 
 	return nil
 }
 
-func (sqlDb *DbConnection) UpdateProduct(id int64, name string, price float32, quantity int) (int64, error) {
+func (sqlDb *DbConnection) UpdateProduct(id int64, name string, price float32, quantity int, shopID string) (int64, error) {
 	stmt, err := sqlDb.db.Prepare(`UPDATE product
 		SET product_name = ?, product_price = ?, product_quantity = ?
-		WHERE id = ?`)
+		WHERE id = ? AND shopID = ?`)
 	if err != nil {
 		return 0, err
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(name, price, quantity, id)
+	result, err := stmt.Exec(name, price, quantity, id, shopID)
 	if err != nil {
 		return 0, err
 	}

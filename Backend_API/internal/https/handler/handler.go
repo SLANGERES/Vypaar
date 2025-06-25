@@ -5,17 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/go-playground/validator"
+	"github.com/slangeres/Vypaar/backend_API/internal/https/middleware"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage"
+
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
 	"github.com/slangeres/Vypaar/backend_API/internal/util"
 )
 
 func PostProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		var data types.Product
 
 		err := json.NewDecoder(r.Body).Decode(&data)
@@ -41,7 +45,16 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 			}
 			return
 		}
-		shopID := "chinmay_7733844"
+
+		//!jwt claims
+
+		claims, ok := middleware.UserClaimsFromContext(r.Context())
+		if !ok {
+			slog.Error("unable to get the jwt claims")
+		}
+
+		shopID := claims.ShopID
+
 		id, err := storage.CreateProduct(data.Name, float32(data.Price), data.Quantity, shopID)
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("failed to create product: %w", err)))
@@ -58,7 +71,11 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 
 func GetProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		products, err := storage.GetAllProduct()
+		claim, ok := middleware.UserClaimsFromContext(r.Context())
+		if !ok {
+			slog.Info("unable to get the jwt")
+		}
+		products, err := storage.GetAllProduct(claim.ShopID)
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get the product")))
 			return
@@ -74,6 +91,7 @@ func GetProduct(storage storage.Storage) http.HandlerFunc {
 
 func GetProductById(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		var product types.Product
 		id := r.PathValue("id")
 		if id == "" {
@@ -84,8 +102,11 @@ func GetProductById(storage storage.Storage) http.HandlerFunc {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to parse id")))
 			return
 		}
-
-		product, err = storage.GetUserById(newId)
+		claim, ok := middleware.UserClaimsFromContext(r.Context())
+		if !ok {
+			slog.Info("Unable to get the claim")
+		}
+		product, err = storage.GetUserById(newId, claim.ShopID)
 
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get the product")))
@@ -107,8 +128,11 @@ func DeleteProduct(storage storage.Storage) http.HandlerFunc {
 			util.WriteResponse(w, http.StatusBadRequest, util.ErrorResponse(fmt.Errorf("unable to parse the id")))
 			return
 		}
-
-		err = storage.DeleteUser(newId)
+		claim, ok := middleware.UserClaimsFromContext(r.Context())
+		if !ok {
+			slog.Info("Unable to get the claim")
+		}
+		err = storage.DeleteUser(newId,claim.ShopID)
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to delete product")))
 			return
@@ -136,8 +160,12 @@ func UpdateProduct(storage storage.Storage) http.HandlerFunc {
 		var product types.Product
 
 		json.NewDecoder(r.Body).Decode(&product)
+		claim, ok := middleware.UserClaimsFromContext(r.Context())
+		if !ok {
+			slog.Info("Unable to get the claim")
+		}
 
-		response, err := storage.UpdateProduct(newId, product.Name, float32(product.Price), int(product.Price))
+		response, err := storage.UpdateProduct(newId, product.Name, float32(product.Price), int(product.Price),claim.ShopID)
 
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to update the product")))

@@ -45,27 +45,27 @@ func InitUserDb(cnf *config.Config) (*UserDbConnection, error) {
 	return &UserDbConnection{db: db}, nil
 }
 
-func (dbc *UserDbConnection) Login(email string, password string) (int64, error) {
+func (dbc *UserDbConnection) Login(email string, password string) (string, error) {
 	var userdata types.User
 
-	stmt, err := dbc.db.Prepare(`SELECT id, name, password FROM user WHERE email=$1`)
+	stmt, err := dbc.db.Prepare(`SELECT id, shopID, name, password FROM user WHERE email=$1`)
 	if err != nil {
-		return 0, fmt.Errorf("error preparing db: %w", err)
+		return "", fmt.Errorf("error preparing db: %w", err)
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(email).Scan(&userdata.Id, &userdata.Name, &userdata.Password)
+	err = stmt.QueryRow(email).Scan(&userdata.Id, &userdata.ShopID, &userdata.Name, &userdata.Password)
 	if err != nil {
-		return 0, fmt.Errorf("invalid credentials: %w", err)
+		return "", fmt.Errorf("invalid credentials: %w", err)
 	}
 
 	// Use bcrypt to compare passwords securely
 	err = bcrypt.CompareHashAndPassword([]byte(userdata.Password), []byte(password))
 	if err != nil {
-		return 0, fmt.Errorf("wrong password")
+		return "", fmt.Errorf("wrong password")
 	}
 
-	return int64(userdata.Id), nil
+	return userdata.ShopID, nil
 }
 func (dbc *UserDbConnection) Signup(name string, email string, password string, shopID string) (int64, error) {
 	// Hash the password using bcrypt
