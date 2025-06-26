@@ -2,6 +2,7 @@ package sqllite
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -57,8 +58,16 @@ func (sqlDb *DbConnection) CreateProduct(name string, price float32, quantity in
 }
 
 // GetAllProduct method
-func (sqlDb *DbConnection) GetAllProduct(shopID string) ([]types.Product, error) {
-	rows, err := sqlDb.db.Query("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE shopID=?", shopID)
+func (sqlDb *DbConnection) GetAllProduct(shopID string, offset int64, limit int64, sortOrder string, sortField string) ([]types.Product, error) {
+	query := fmt.Sprintf(`
+		SELECT id, shopID, product_name, product_price, product_quantity
+		FROM product
+		WHERE shopID = ?
+		ORDER BY %s %s
+		LIMIT ? OFFSET ?
+	`, sortField, sortOrder)
+
+	rows, err := sqlDb.db.Query(query, shopID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +84,7 @@ func (sqlDb *DbConnection) GetAllProduct(shopID string) ([]types.Product, error)
 
 	return products, nil
 }
+
 func (sqlDb *DbConnection) GetUserById(id int64, shopID string) (types.Product, error) {
 	stmt, err := sqlDb.db.Prepare("SELECT id, shopID, product_name, product_price, product_quantity FROM product WHERE id = ? AND shopID = ?")
 	if err != nil {

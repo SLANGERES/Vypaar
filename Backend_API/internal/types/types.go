@@ -24,3 +24,10 @@ type Login struct {
 	Email    string `validate:"required"`
 	Password string `validate:"required"`
 }
+
+var ValidSortFields = map[string]string{
+	"id":         "id",
+	"price":      "product_price",
+	"name":       "product_name",
+	"created_at": "created_at",
+}

@@ -73,18 +73,66 @@ func GetProduct(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claim, ok := middleware.UserClaimsFromContext(r.Context())
 		if !ok {
-			slog.Info("unable to get the jwt")
-		}
-		products, err := storage.GetAllProduct(claim.ShopID)
-		if err != nil {
-			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get the product")))
+			slog.Warn("unable to get the jwt from context")
+			util.WriteResponse(w, http.StatusUnauthorized, util.ErrorResponse(fmt.Errorf("unauthorized")))
 			return
 		}
 
-		// Construct a generic map[string]interface{} response
+		query := r.URL.Query()
+
+		// Defaults
+		page := int64(1)
+		limit := int64(5)
+
+		// Parse page
+		if query.Has("page") {
+			if parsedPage, err := util.ParseInt(query.Get("page")); err == nil && parsedPage > 0 {
+				page = parsedPage
+			} else {
+				slog.Warn("invalid page, using default: 1")
+			}
+		}
+
+		// Parse limit
+		if query.Has("limit") {
+			if parsedLimit, err := util.ParseInt(query.Get("limit")); err == nil && parsedLimit > 0 {
+				limit = parsedLimit
+			} else {
+				slog.Warn("invalid limit, using default: 10")
+			}
+		}
+
+		offset := (page - 1) * limit
+
+		//! sort
+
+		sortField := "id" // default sort field
+		sortOrder := "ASC"
+
+		if query.Has("sortField") {
+			sortField = query.Get("sortField")
+		}
+
+		if query.Has("sortOrder") {
+			sortOrder = query.Get("sortOrder")
+		}
+
+		newSortfield := types.ValidSortFields[sortField]
+
+		products, err := storage.GetAllProduct(claim.ShopID, offset, limit, sortOrder, newSortfield)
+		if err != nil {
+			slog.Error("unable to get products", "error", err)
+			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to get products")))
+			return
+		}
+
 		util.WriteResponse(w, http.StatusOK, map[string]interface{}{
-			"success":  true,
-			"products": products,
+			"success":   true,
+			"products":  products,
+			"page":      page,
+			"limit":     limit,
+			"sortOrder": sortOrder,
+			"sortField": sortField,
 		})
 	}
 }
@@ -93,6 +141,7 @@ func GetProductById(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var product types.Product
+
 		id := r.PathValue("id")
 		if id == "" {
 			util.ParameterMissing(w, http.StatusInternalServerError)
@@ -132,7 +181,7 @@ func DeleteProduct(storage storage.Storage) http.HandlerFunc {
 		if !ok {
 			slog.Info("Unable to get the claim")
 		}
-		err = storage.DeleteUser(newId,claim.ShopID)
+		err = storage.DeleteUser(newId, claim.ShopID)
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to delete product")))
 			return
@@ -165,7 +214,7 @@ func UpdateProduct(storage storage.Storage) http.HandlerFunc {
 			slog.Info("Unable to get the claim")
 		}
 
-		response, err := storage.UpdateProduct(newId, product.Name, float32(product.Price), int(product.Price),claim.ShopID)
+		response, err := storage.UpdateProduct(newId, product.Name, float32(product.Price), int(product.Price), claim.ShopID)
 
 		if err != nil {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("unable to update the product")))
