@@ -34,6 +34,7 @@ func InitUserDb(cnf *config.Config) (*UserDbConnection, error) {
 			email TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL,
 			shopID TEXT NOT NULL,
+			isVerify BOOLEAN DEFAULT 0,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
@@ -96,4 +97,30 @@ func (dbc *UserDbConnection) Signup(name string, email string, password string, 
 	}
 
 	return id, nil
+}
+
+func (dbc *UserDbConnection) VerifyEmail(email string) (int64, error) {
+	// Prepare the update statement
+	stmt, err := dbc.db.Prepare(`UPDATE user SET isVerify=TRUE WHERE email=?`)
+	if err != nil {
+		return 0, fmt.Errorf("failed to prepare update statement: %w", err)
+	}
+	defer stmt.Close()
+
+	// Execute the update
+	res, err := stmt.Exec(email)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute update: %w", err)
+	}
+
+	// Optional: Check if any rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve affected rows: %w", err)
+	}
+	if rowsAffected == 0 {
+		return 0, fmt.Errorf("no user found with email %s", email)
+	}
+
+	return rowsAffected, nil
 }

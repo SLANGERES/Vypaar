@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"time"
 
 	"net/http"
 
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
+	RabbitMQ "github.com/slangeres/Vypaar/backend_API/internal/rabbitMQ"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage"
 	"github.com/slangeres/Vypaar/backend_API/internal/token"
 	"github.com/slangeres/Vypaar/backend_API/internal/types"
@@ -95,10 +97,23 @@ func SignupUser(storage storage.UserStorage) http.HandlerFunc {
 			return
 
 		}
+		//Verigy gmail
+		// Generate a 5-digit random number between 10000 and 99999
+		otp := rand.Intn(90000) + 10000
+
+		//push this otp in redis ....to check while verifying
+		RabbitMQ.SendMail(user.Email, otp)
+
 		util.WriteResponse(w, http.StatusCreated, map[string]any{
 			"sucess":       "True",
 			"message":      "Sign up sucessful",
 			"user_created": id,
 		})
+	}
+}
+
+func VerifyOtp(storage storage.UserStorage) http.HandlerFunc{
+	return func(w http.ResponseWriter, r *http.Request) {
+		
 	}
 }

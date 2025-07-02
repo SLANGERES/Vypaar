@@ -60,6 +60,7 @@ func PostProduct(storage storage.Storage) http.HandlerFunc {
 			util.WriteResponse(w, http.StatusInternalServerError, util.ErrorResponse(fmt.Errorf("failed to create product: %w", err)))
 			return
 		}
+		
 
 		util.WriteResponse(w, http.StatusCreated, map[string]string{
 			"success":    "ok",
