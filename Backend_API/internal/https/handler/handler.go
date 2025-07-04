@@ -226,6 +226,7 @@ func UpdateProduct(storage storage.Storage) http.HandlerFunc {
 			"sucess":   true,
 			"response": response,
 		})
+		
 
 	}
 }

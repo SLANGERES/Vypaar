@@ -140,4 +140,4 @@ func (sqlDb *DbConnection) UpdateProduct(id int64, name string, price float32, q
 	return rowsAffected, nil
 }
 
-//! get product with shop id
+

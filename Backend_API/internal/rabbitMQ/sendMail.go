@@ -14,7 +14,7 @@ type data struct {
 	Otp   int    `json:"otp"`
 }
 
-func SendMail(Email string, Otp int) {
+func SendMail(Email string, Otp int) string {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		log.Fatalf("Unable to dial the connection: %v", err)
@@ -56,9 +56,9 @@ func SendMail(Email string, Otp int) {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Failed to publish message: %v", err)
+		return "Failed to publish message"
 	}
 
-	log.Println("Message published successfully")
+	return "Message published successfully"
 
 }

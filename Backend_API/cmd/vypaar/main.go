@@ -11,10 +11,15 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/slangeres/Vypaar/backend_API/internal/config"
+
 	"github.com/slangeres/Vypaar/backend_API/internal/https/handler"
 	"github.com/slangeres/Vypaar/backend_API/internal/https/middleware"
 	"github.com/slangeres/Vypaar/backend_API/internal/storage/sqllite"
 	"github.com/slangeres/Vypaar/backend_API/internal/token"
+
+	//Redis
+
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -29,6 +34,13 @@ func main() {
 		slog.Warn("databse connection issue .....")
 
 	}
+	//! Config Redis
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: cnf.RedisPassword, // no password set
+		DB:       0,                 // use default DB
+	})
 
 	//JWT Maker
 	jwtMaker := token.NewJwtMaker(cnf.JwtSecrateKey)
@@ -50,9 +62,13 @@ func main() {
 
 	//! Authenticate handler
 
-	router.HandleFunc("POST /api/v1/signup", handler.SignupUser(userDb))
+	router.HandleFunc("POST /api/v1/signup", handler.SignupUser(userDb, rdb))
 
 	router.HandleFunc("POST /api/v1/login", handler.LoginUser(userDb, jwtMaker))
+
+	router.Handle("POST /api/v1/verify", handler.VerifyUser(userDb, rdb))
+
+	router.Handle("POST /api/v1/generate-otp", middleware.AuthMiddleware(jwtMaker)(handler.GenerateOTP(rdb)))
 
 	router.Handle("POST /api/v1/products", middleware.AuthMiddleware(jwtMaker)(handler.PostProduct(db)))
 

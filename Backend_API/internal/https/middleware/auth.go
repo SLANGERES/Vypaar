@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"log/slog"
+
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -35,8 +35,6 @@ func AuthMiddleware(jwtMaker *token.JwtMaker) func(http.Handler) http.Handler {
 				return
 
 			}
-			slog.Info(claims.ShopID)
-			slog.Info(claims.Subject)
 			ctx := context.WithValue(r.Context(), userClaimsKey, &claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
