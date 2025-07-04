@@ -1,64 +1,94 @@
-# 🏪 Vyapaar – Shop Inventory Management System
+# Vyapaar – Inventory Management System 🛒
 
-**Vyapaar** is a full-stack **Shop Inventory Management** application built to help small businesses manage their products, users, and sales efficiently.
-
-The project is currently under active development, with the backend implemented in **Go (Golang)** and JWT-based authentication already in place. The frontend development is underway.
+Vyapaar is a backend service for managing shop inventories with user authentication, product management, email verification, and robust API design. This service is built using **Go**, with support for **JWT-based authentication**, **Redis**, **RabbitMQ**, and more.
 
 ---
 
-## 📦 Tech Stack
+## 🚀 Features
 
-### 🚀 Backend
-- **Language**: Go (Golang)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Routing**: `net/http`
-- **Database**: sqlite
-- **Key Features**:
-  - User Signup/Login
-  - JWT-based Auth Middleware
-  - Product CRUD APIs
-
-### 💻 Frontend *(in development)*
-- **Framework**: [To be added, e.g., React.js, Vue.js]
-- **Design**: Responsive UI for inventory, orders, and user dashboard
-
----
-
+- 🔐 **User Authentication** (Signup, Login) with JWT
+- 📧 **Email Verification** via SMTP using RabbitMQ
+- 🏪 **Shop-based Product Management** using `shopID`
+- 🧾 **CRUD APIs** for Products:
+  - `GET /products`
+  - `GET /products/:id`
+  - `POST /products`
+  - `PATCH /products/:id`
+  - `DELETE /products/:id`
+- 🔍 **Pagination, Sorting & Filtering** via query parameters
+- 📦 **Redis** used for OTP storage and caching
+- 🐇 **RabbitMQ** queues OTP emails
+- 🐳 Docker support with images for Redis and RabbitMQ
+- ⚙️ Configurable using a YAML file
+- 🖥️ Frontend: Coming Soon (TBA)
 
 ---
 
 ## 🔐 Authentication Flow
 
-- On login/signup, the backend issues a **JWT token**.
-- The token must be included in the `token` cookies (`Bearer <token>`) for protected routes like product operations.
-- Middleware verifies the token and extracts user info from it.
+1. User **signs up** with email and password.
+2. Backend generates an **OTP**, stores in Redis, and pushes it to RabbitMQ.
+3. Email service reads from queue and sends OTP via SMTP.
+4. User **verifies** email using `/verify` endpoint.
+5. On login, a **JWT token** is issued and required for protected routes.
+6. If regenerate otp use `/generate-otp`
 
 ---
 
-## 🧪 API Overview
+## 🧪 Example API Usage
 
-### 🔑 Auth Routes
-- `POST /signup` – Register a new user
-- `POST /login` – Authenticate user and receive JWT
+### Signup
+```http
+POST /signup
+Content-Type: application/json
 
-### 📦 Product Routes (Protected)
-- `GET /products` – List all products
-- `POST /products` – Add a new product
-- `PUT /products/:id` – Update a product
-- `DELETE /products/:id` – Delete a product
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepass123"
+}
 
----
+POST /verify
+Content-Type: application/json
 
-## 🛠️ Setup Instructions
+{
+  "email": "john@example.com",
+  "otp": "12345"
+}
+POST /generate-otp
+Content-Type: application/json
 
-```bash
-# Clone the repo
-git clone https://github.com/yourusername/vyapaar.git
-cd vyapaar
+Make sure you login first
 
-# Initialize Go modules
-go mod tidy
+GET /products?limit=10&page=2&sort=name&filter=category:electronics
+```
 
-# Run the server
-go run cmd/main.go
+## 🛠️ Tech Stack
+
+Language: Go (Golang)
+
+Database: Sqlite 
+
+Cache: Redis
+
+Queue: RabbitMQ
+
+Email: SMTP (Migrate to Google service later on)
+
+Auth: JWT
+
+Container: Docker
+
+
+## 🚧 TODO
+
+ Frontend (React/Vue) – Coming Soon!
+
+ Rate limiting and abuse prevention
+
+ API documentation with Swagger
+
+## 🤝 Contributing
+Pull requests are welcome. For major changes, open an issue first to discuss what you would like to change.
+
 
