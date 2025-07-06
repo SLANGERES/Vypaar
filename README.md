@@ -34,6 +34,16 @@ Vyapaar is a backend service for managing shop inventories with user authenticat
 6. If regenerate otp use `/generate-otp`
 
 ---
+## To start the server 
+```
+  -> Make config file in the Backend_API name config/local.yaml 
+  -> Make a env file in the Backend_API/internal/config/ and add the address of config file that we make above
+  -> Make a env file and add email data in the /Microservices/sendMail 
+
+  then: 
+  
+  docker-compose up --build
+```
 
 ## 🧪 Example API Usage
 
