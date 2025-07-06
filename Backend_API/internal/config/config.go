@@ -2,10 +2,12 @@ package config
 
 import (
 	"flag"
+
 	"log"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type HttpServer struct {
@@ -24,7 +26,12 @@ type Config struct {
 
 func MustDone() *Config {
 
-	configPath := os.Getenv("config_path")
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	configPath := os.Getenv("CONFIG_PATH")
 
 	if configPath == "" {
 		flgpath := flag.String("config_path", "", "Path to config file")
@@ -34,7 +41,7 @@ func MustDone() *Config {
 			log.Fatal("Invalid config path from flag")
 		}
 	}
-	_, err := os.Stat(configPath)
+	_, err = os.Stat(configPath)
 	if os.IsNotExist(err) {
 		log.Fatal("Unable to find the config file")
 	}

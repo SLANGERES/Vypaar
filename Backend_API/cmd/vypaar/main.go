@@ -94,7 +94,7 @@ func main() {
 		Addr:    cnf.HttpServer.Addr,
 		Handler: requestHandler,
 	}
-	slog.Info("Server is up and running")
+	slog.Info("Server is up and running on port number "+cnf.HttpServer.Addr)
 	//! gracefully shutdown
 
 	done := make(chan os.Signal, 1)

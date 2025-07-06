@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./BACKEND_API
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    depends_on:
+      - redis
+      - rabbitmq
+    networks:
+      - app-network
+
+  mail:
+    build:
+      context: ./Microservices/sendEmail
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
